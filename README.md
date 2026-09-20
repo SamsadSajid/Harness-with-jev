@@ -82,6 +82,32 @@ jev-router demo
 
 The `run` command prints the route explanation before the selected model's answer. Do not put secrets, browser content, or untrusted tool output into a concatenated router prompt. Pass them as named `context` fields and keep authorization, path allowlists, and spend caps in code.
 
+## HTTP API
+
+Install the API extra, load the keys, then start a loopback-only server:
+
+```bash
+pip install -e '.[api,dev]'
+set -a; source .env; set +a
+jev-router-api
+```
+
+Interactive OpenAPI documentation is at `http://127.0.0.1:8000/docs`.
+
+```bash
+# Make only the Jev routing decision.
+curl -sS http://127.0.0.1:8000/v1/route \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"Diagnose a sporadic production authentication failure safely."}'
+
+# Route and call the selected OpenRouter model (requires available provider credit).
+curl -sS http://127.0.0.1:8000/v1/execute \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"Return exactly HARNESS_OK and nothing else."}'
+```
+
+`/v1/route` returns the selected model, policy reasons, and Jev signals. `/v1/execute` includes the generated answer. The service binds to `127.0.0.1` by default; put authentication and rate limiting in front of it before exposing it beyond your machine.
+
 ## Test
 
 ```bash
