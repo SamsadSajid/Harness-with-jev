@@ -92,6 +92,12 @@ set -a; source .env; set +a
 jev-router-api
 ```
 
+Or use the shortcut, which loads `.env` and starts the same loopback-only service:
+
+```bash
+make serve
+```
+
 Interactive OpenAPI documentation is at `http://127.0.0.1:8000/docs`.
 
 ```bash
