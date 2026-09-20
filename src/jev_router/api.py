@@ -17,15 +17,16 @@ class RouteRequest(BaseModel):
     allowed: Optional[List[str]] = None
     min_model: Optional[str] = None
     max_model: Optional[str] = None
+    include_raw_jev: bool = False
 
 
 class ExecuteRequest(RouteRequest):
     system: Optional[str] = Field(None, max_length=16_000)
 
 
-def _decision_body(decision: Decision) -> Dict[str, Any]:
+def _decision_body(decision: Decision, *, include_raw_jev: bool = False) -> Dict[str, Any]:
     judgment = decision.judgment
-    return {
+    body = {
         "selected": decision.model.key,
         "provider_model": decision.model.provider_model,
         "reasons": list(decision.reasons),
@@ -41,6 +42,9 @@ def _decision_body(decision: Decision) -> Dict[str, Any]:
             "latency_ms": judgment.latency_ms,
         },
     }
+    if include_raw_jev:
+        body["raw_jev_response"] = None if judgment is None else judgment.raw_response
+    return body
 
 
 def _options(request: RouteRequest) -> Dict[str, Any]:
@@ -71,7 +75,7 @@ def create_app(router: Optional[Router] = None) -> FastAPI:
             decision = app.state.router.route(request.prompt, **_options(request))
         except ValueError as error:
             raise HTTPException(status_code=422, detail=str(error)) from error
-        return _decision_body(decision)
+        return _decision_body(decision, include_raw_jev=request.include_raw_jev)
 
     @app.post("/v1/execute")
     def execute(request: ExecuteRequest) -> Dict[str, Any]:
@@ -82,7 +86,7 @@ def create_app(router: Optional[Router] = None) -> FastAPI:
         except RuntimeError as error:
             # Do not expose exception chains, credentials, or upstream response bodies.
             raise HTTPException(status_code=502, detail=str(error)) from error
-        response = _decision_body(decision)
+        response = _decision_body(decision, include_raw_jev=request.include_raw_jev)
         response["answer"] = answer
         return response
 

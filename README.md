@@ -106,13 +106,18 @@ curl -sS http://127.0.0.1:8000/v1/route \
   -H 'Content-Type: application/json' \
   -d '{"prompt":"Diagnose a sporadic production authentication failure safely."}'
 
+# Add include_raw_jev to inspect Jev's full typed API response.
+curl -sS http://127.0.0.1:8000/v1/route \
+  -H 'Content-Type: application/json' \
+  -d '{"prompt":"Diagnose a sporadic production authentication failure safely.","include_raw_jev":true}'
+
 # Route and call the selected OpenRouter model (requires available provider credit).
 curl -sS http://127.0.0.1:8000/v1/execute \
   -H 'Content-Type: application/json' \
   -d '{"prompt":"Return exactly HARNESS_OK and nothing else."}'
 ```
 
-`/v1/route` returns the selected model, policy reasons, and Jev signals. `/v1/execute` includes the generated answer. The service binds to `127.0.0.1` by default; put authentication and rate limiting in front of it before exposing it beyond your machine.
+`/v1/route` returns the selected model, policy reasons, and Jev signals. Add `"include_raw_jev": true` to include the entire Jev response returned to the harness. `/v1/execute` includes the generated answer. The service binds to `127.0.0.1` by default; put authentication and rate limiting in front of it before exposing it beyond your machine.
 
 ## Test
 

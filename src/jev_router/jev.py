@@ -56,9 +56,22 @@ class JevJudge:
             if not (isinstance(choice, ChoiceAnswer) and isinstance(reasoning, NoulAnswer)
                     and isinstance(blast, ScoreAnswer) and isinstance(ambiguity, NoulAnswer)):
                 return None
+            latency_ms = int((time.monotonic() - started) * 1000)
+            raw_response = {
+                "model": self.model,
+                "answers": {
+                    "model": {"type": "choice", "choice": choice.choice, "confidence": choice.confidence,
+                              "probabilities": dict(choice.probabilities)},
+                    "deep_reasoning": {"type": "noul", "noul": reasoning.noul},
+                    "blast_radius": {"type": "score", "score": blast.score,
+                                     "confidence": blast.confidence, "probabilities": dict(blast.probabilities)},
+                    "ambiguity": {"type": "noul", "noul": ambiguity.noul},
+                },
+                "usage": {"input_tokens": response.usage.input_tokens or 0},
+            }
             return Judgment(choice.choice, choice.confidence, dict(choice.probabilities), reasoning.noul,
-                            blast.score, ambiguity.noul, response.usage.input_tokens or 0,
-                            int((time.monotonic() - started) * 1000))
+                            blast.score, ambiguity.noul, response.usage.input_tokens or 0, latency_ms,
+                            raw_response)
         except Exception:
             # Prompt text is deliberately not logged: this sits in front of user traffic.
             return None
@@ -115,7 +128,7 @@ class JevJudge:
             return Judgment(
                 choice["choice"], float(choice["confidence"]), dict(choice["probabilities"]),
                 float(reasoning["noul"]), float(blast["score"]), float(ambiguity["noul"]),
-                int(usage.get("input_tokens") or 0), int((time.monotonic() - started) * 1000),
+                int(usage.get("input_tokens") or 0), int((time.monotonic() - started) * 1000), body,
             )
         except Exception:
             return None

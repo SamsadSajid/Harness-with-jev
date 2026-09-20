@@ -12,7 +12,8 @@ class StubRouter:
         self.decision = Decision(
             DEFAULT_MODELS[1],
             ("jev:balanced@0.91",),
-            Judgment("balanced", .91, {"balanced": .91}, .6, .7, .1, 42, 123),
+            Judgment("balanced", .91, {"balanced": .91}, .6, .7, .1, 42, 123,
+                      {"model": "jev-1.13.0", "answers": {"model": {"type": "choice"}}}),
         )
 
     def route(self, prompt, **options):
@@ -35,12 +36,14 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.json(), {"status": "ok"})
 
     def test_route_returns_explainable_decision(self):
-        response = self.client.post("/v1/route", json={"prompt": "Implement this issue", "max_model": "frontier"})
+        response = self.client.post("/v1/route", json={"prompt": "Implement this issue", "max_model": "frontier",
+                                                        "include_raw_jev": True})
         self.assertEqual(response.status_code, 200)
         body = response.json()
         self.assertEqual(body["selected"], "balanced")
         self.assertEqual(body["provider_model"], "anthropic/claude-sonnet-4")
         self.assertEqual(body["judgment"]["input_tokens"], 42)
+        self.assertEqual(body["raw_jev_response"]["model"], "jev-1.13.0")
         self.assertEqual(self.router.last_route[1]["max_model"], "frontier")
 
     def test_execute_returns_answer_and_route(self):

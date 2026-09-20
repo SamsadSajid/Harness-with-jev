@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 
 @dataclass(frozen=True)
@@ -25,6 +25,7 @@ class Judgment:
     ambiguity: float
     input_tokens: int = 0
     latency_ms: int = 0
+    raw_response: Optional[Dict[str, Any]] = None
 
 
 @dataclass(frozen=True)
