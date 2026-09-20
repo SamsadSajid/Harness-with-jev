@@ -1,8 +1,12 @@
 import unittest
+from io import BytesIO
+from unittest.mock import patch
+from urllib.error import HTTPError
 
 from jev_router.config import DEFAULT_MODELS
 from jev_router.models import Judgment
 from jev_router.policy import decide
+from jev_router.providers import run_openrouter
 
 
 def judgment(choice="fast", **values):
@@ -36,6 +40,18 @@ class RoutingPolicyTests(unittest.TestCase):
     def test_risk_does_not_demote_an_extended_choice(self):
         decision = decide(DEFAULT_MODELS, judgment("extended", blast_radius=2.0))
         self.assertEqual(decision.model.key, "extended")
+
+    def test_realistic_live_jev_signals_escalate_to_frontier(self):
+        decision = decide(DEFAULT_MODELS, judgment("frontier", confidence=.33, deep_reasoning=.93,
+                                                    blast_radius=1.99, ambiguity=.95))
+        self.assertEqual(decision.model.key, "frontier")
+
+    def test_openrouter_http_errors_are_actionable(self):
+        error = HTTPError("https://openrouter.ai", 402, "Payment Required", {},
+                          BytesIO(b'{"error":{"message":"Insufficient credits"}}'))
+        with patch("urllib.request.urlopen", side_effect=error):
+            with self.assertRaisesRegex(RuntimeError, "HTTP 402.*Insufficient credits"):
+                run_openrouter(DEFAULT_MODELS[0], "hello", "test-key")
 
     def test_force_model_skips_judgment_and_is_clamped_by_cap(self):
         decision = decide(DEFAULT_MODELS, None, force_model="extended", max_model="frontier")

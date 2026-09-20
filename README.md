@@ -54,13 +54,15 @@ Safety rules are deterministic:
 ## Setup
 
 ```bash
-python3.10 -m venv .venv
+python3 -m venv .venv
 . .venv/bin/activate
 pip install -e '.[dev]'
 cp .env.example .env
 ```
 
 Set `TYPESAFE_API_KEY` for live Jev decisions. Set `OPENROUTER_API_KEY` only when you want the harness to call the downstream model. `route` works without either key, but correctly reports a conservative fallback instead of pretending to use Jev.
+
+The official TypeSafe Python SDK requires Python 3.10+. On Python 3.9, the harness uses the same documented System One HTTPS contract automatically; Python 3.10+ uses the official SDK.
 
 ## Use
 
