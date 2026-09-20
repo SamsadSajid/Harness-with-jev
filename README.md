@@ -4,6 +4,33 @@ An explainable harness that uses TypeSafe **Jev** to decide which downstream mod
 
 Jev belongs in the control plane—not the generation plane. It returns typed, calibrated decisions cheaply and quickly; the selected LLM still does the writing, coding, and tool work. The harness keeps the final routing policy in ordinary Python, which makes it reviewable, replayable, and testable without paying for inference.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    U[User request] --> R[Router]
+    C[Optional context] --> R
+    O[Operator controls\nforce model, caps, floors] --> P
+
+    R -->|request and context| J[Jev decision model]
+    J -->|Choice, confidence, reasoning,\nrisk, ambiguity| P[Deterministic policy]
+    R -->|no key, timeout, or invalid result| F[Conservative balanced fallback]
+    F --> P
+
+    P --> D{Selected model tier}
+    D --> M1[fast]
+    D --> M2[balanced]
+    D --> M3[frontier]
+    D --> M4[extended]
+    M1 --> OR[OpenRouter execution]
+    M2 --> OR
+    M3 --> OR
+    M4 --> OR
+    OR --> A[Generated answer]
+
+    P -. explanation and signals .-> L[Route log / evaluation data]
+```
+
 ## What it decides
 
 One Jev request produces four independent signals:
